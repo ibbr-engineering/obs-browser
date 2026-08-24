@@ -8,7 +8,7 @@ const license = await readFile(new URL('../LICENSE', import.meta.url), 'utf8');
 if (packageMetadata.license !== 'Apache-2.0') {
   throw new Error('package license must be Apache-2.0');
 }
-if (Object.hasOwn(packageMetadata, 'publishConfig')) {
+if (Object.keys(packageMetadata).some((key) => key.toLowerCase() === 'publishconfig')) {
   throw new Error('package registry configuration is not allowed');
 }
 if (!license.includes('Apache License') || !license.includes('Version 2.0')) {
