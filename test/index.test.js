@@ -90,10 +90,16 @@ describe('initRum', () => {
     first.dispose();
     history.pushState({}, '', '/after-first');
 
-    expect((await eventsFor('https://one.example.com/collect')).filter((event) => event.route === '/after-first')).toEqual([]);
-    expect((await eventsFor('https://two.example.com/collect')).filter((event) => event.route === '/after-first')).toEqual([
-      { type: 'page_view', route: '/after-first' },
-    ]);
+    expect(
+      (await eventsFor('https://one.example.com/collect')).filter(
+        (event) => event.route === '/after-first',
+      ),
+    ).toEqual([]);
+    expect(
+      (await eventsFor('https://two.example.com/collect')).filter(
+        (event) => event.route === '/after-first',
+      ),
+    ).toEqual([{ type: 'page_view', route: '/after-first' }]);
     expect(history.pushState).not.toBe(originalPushState);
 
     second.dispose();

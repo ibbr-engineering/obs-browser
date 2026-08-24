@@ -2,7 +2,9 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 
 import { build } from 'esbuild';
 
-const packageMetadata = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'));
+const packageMetadata = JSON.parse(
+  await readFile(new URL('./package.json', import.meta.url), 'utf8'),
+);
 const banner = `/*! ${packageMetadata.name} v${packageMetadata.version} | SPDX-License-Identifier: Apache-2.0 */`;
 const outputDirectory = new URL('./dist/', import.meta.url);
 

@@ -1,9 +1,5 @@
 function isLoopback(hostname) {
-  return (
-    hostname === 'localhost' ||
-    hostname === '[::1]' ||
-    /^127(?:\.\d{1,3}){3}$/.test(hostname)
-  );
+  return hostname === 'localhost' || hostname === '[::1]' || /^127(?:\.\d{1,3}){3}$/.test(hostname);
 }
 
 export function validateConfig(config) {

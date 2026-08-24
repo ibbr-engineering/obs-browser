@@ -22,7 +22,9 @@ describe('browser bundles', () => {
   });
 
   it('exports initRum from the ESM bundle', async () => {
-    const bundleUrl = pathToFileURL(new URL('../dist/obs-browser.esm.js', import.meta.url).pathname);
+    const bundleUrl = pathToFileURL(
+      new URL('../dist/obs-browser.esm.js', import.meta.url).pathname,
+    );
     const bundle = await import(`${bundleUrl.href}?test=${Date.now()}`);
 
     expect(bundle).toEqual(expect.objectContaining({ initRum: expect.any(Function) }));

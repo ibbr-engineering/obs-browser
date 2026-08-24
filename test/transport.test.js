@@ -14,7 +14,12 @@ describe('send', () => {
     vi.stubGlobal('navigator', { sendBeacon });
     vi.stubGlobal('fetch', fetch);
 
-    expect(send('https://rum.example.com/collect', { type: 'page_view', route: '/' })).toBeUndefined();
+    expect(
+      send('https://rum.example.com/collect', {
+        type: 'page_view',
+        route: '/',
+      }),
+    ).toBeUndefined();
 
     expect(sendBeacon).toHaveBeenCalledOnce();
     expect(sendBeacon.mock.calls[0][0]).toBe('https://rum.example.com/collect');
@@ -22,27 +27,33 @@ describe('send', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it.each(['returns false', 'throws'])('falls back to isolated fetch when sendBeacon %s', (behavior) => {
-    const sendBeacon = vi.fn(() => {
-      if (behavior === 'throws') throw new Error('quota exceeded');
-      return false;
-    });
-    const fetch = vi.fn(() => Promise.resolve(new Response()));
-    vi.stubGlobal('navigator', { sendBeacon });
-    vi.stubGlobal('fetch', fetch);
+  it.each(['returns false', 'throws'])(
+    'falls back to isolated fetch when sendBeacon %s',
+    (behavior) => {
+      const sendBeacon = vi.fn(() => {
+        if (behavior === 'throws') throw new Error('quota exceeded');
+        return false;
+      });
+      const fetch = vi.fn(() => Promise.resolve(new Response()));
+      vi.stubGlobal('navigator', { sendBeacon });
+      vi.stubGlobal('fetch', fetch);
 
-    expect(() =>
-      send('https://rum.example.com/collect', { type: 'js_error', route: '/checkout' }),
-    ).not.toThrow();
-    expect(fetch).toHaveBeenCalledWith('https://rum.example.com/collect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{"type":"js_error","route":"/checkout"}',
-      keepalive: true,
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-    });
-  });
+      expect(() =>
+        send('https://rum.example.com/collect', {
+          type: 'js_error',
+          route: '/checkout',
+        }),
+      ).not.toThrow();
+      expect(fetch).toHaveBeenCalledWith('https://rum.example.com/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{"type":"js_error","route":"/checkout"}',
+        keepalive: true,
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+      });
+    },
+  );
 
   it('isolates synchronous and asynchronous fetch failures', async () => {
     vi.stubGlobal('navigator', {});
@@ -54,8 +65,18 @@ describe('send', () => {
       .mockRejectedValueOnce(new Error('offline'));
     vi.stubGlobal('fetch', fetch);
 
-    expect(() => send('https://rum.example.com/collect', { type: 'page_view', route: '/' })).not.toThrow();
-    expect(() => send('https://rum.example.com/collect', { type: 'page_view', route: '/' })).not.toThrow();
+    expect(() =>
+      send('https://rum.example.com/collect', {
+        type: 'page_view',
+        route: '/',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      send('https://rum.example.com/collect', {
+        type: 'page_view',
+        route: '/',
+      }),
+    ).not.toThrow();
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 });

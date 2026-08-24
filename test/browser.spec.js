@@ -18,10 +18,14 @@ test('IIFE tracks navigation and stops after disposal', async ({ page }) => {
     });
   });
   await page.goto('https://app.example.test/start');
-  await page.addScriptTag({ path: new URL('../dist/obs-browser.iife.js', import.meta.url).pathname });
+  await page.addScriptTag({
+    path: new URL('../dist/obs-browser.iife.js', import.meta.url).pathname,
+  });
 
   await page.evaluate(() => {
-    window.rum = window.IbbrObs.initRum({ collectorUrl: 'https://rum.example.com' });
+    window.rum = window.IbbrObs.initRum({
+      collectorUrl: 'https://rum.example.com',
+    });
     history.pushState({}, '', '/orders/42?customer=private');
   });
   await expect.poll(() => page.evaluate(() => window.rumEvents.length)).toBe(3);

@@ -5,14 +5,14 @@
   "type": "module",
   "sideEffects": false,
   "license": "Apache-2.0",
-  "main": "dist/obs-browser.iife.js",
+  "main": "dist/obs-browser.esm.js",
   "module": "dist/obs-browser.esm.js",
   "types": "src/index.d.ts",
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
       "import": "./dist/obs-browser.esm.js",
-      "default": "./dist/obs-browser.iife.js"
+      "default": "./dist/obs-browser.esm.js"
     }
   },
   "files": [
@@ -23,6 +23,9 @@
   ],
   "scripts": {
     "build": "node esbuild.mjs",
+    "check:repository": "node scripts/check-repository.mjs",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
     "pretest": "npm run build",
     "test": "vitest",
     "typecheck": "tsc --noEmit --strict --lib ES2020,DOM src/index.d.ts",
@@ -34,7 +37,9 @@
   "devDependencies": {
     "@playwright/test": "1.62.1",
     "esbuild": "0.25.9",
+    "eslint": "10.9.0",
     "happy-dom": "20.11.6",
+    "prettier": "3.9.6",
     "typescript": "5.9.2",
     "vitest": "3.2.7"
   }
