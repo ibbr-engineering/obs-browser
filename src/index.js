@@ -1,64 +1,48 @@
+import { validateConfig } from './config.js';
+import { jsError, pageLoad, pageView } from './events.js';
 import { heuristic } from './heuristic.js';
-
-function send(collectUrl, payload) {
-  const body = JSON.stringify(payload);
-  try {
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(collectUrl, new Blob([body], { type: 'application/json' }));
-      return;
-    }
-  } catch {
-    // Fall back when the browser rejects the beacon payload.
-  }
-  fetch(collectUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-    keepalive: true,
-  }).catch(() => {
-    // RUM delivery must not disrupt the host application.
-  });
-}
+import { observe } from './lifecycle.js';
+import { send } from './transport.js';
 
 export function initRum(config) {
-  const collectUrl = config.collectorUrl.replace(/\/$/, '') + '/collect';
+  const { collectUrl } = validateConfig(config);
   let lastRoute = heuristic(window.location.pathname);
+  let initialSent = false;
+  let pageViewSent = false;
+  let disposed = false;
 
-  function currentRoute() {
-    return heuristic(window.location.pathname);
-  }
+  const currentRoute = () => heuristic(window.location.pathname);
 
-  function trackPageView(route) {
+  const trackPageView = (route) => {
     lastRoute = route;
-    send(collectUrl, { type: 'page_view', route });
-  }
+    pageViewSent = true;
+    send(collectUrl, pageView(route));
+  };
 
-  window.addEventListener('load', () => {
-    trackPageView(currentRoute());
-    send(collectUrl, { type: 'page_load', route: lastRoute, durationMs: performance.now() });
-  });
-
-  function onNav() {
+  const sendInitial = () => {
+    if (initialSent || disposed) return;
+    initialSent = true;
     const route = currentRoute();
-    if (route === lastRoute) return;
-    trackPageView(route);
-  }
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-  history.pushState = function (...args) {
-    originalPushState.apply(this, args);
-    onNav();
+    if (!pageViewSent) trackPageView(route);
+    send(collectUrl, pageLoad(route, performance.now()));
   };
-  history.replaceState = function (...args) {
-    originalReplaceState.apply(this, args);
-    onNav();
-  };
-  window.addEventListener('popstate', onNav);
 
-  window.addEventListener('error', () => {
-    send(collectUrl, { type: 'js_error', route: currentRoute() });
+  const stopObserving = observe({
+    onLoad: sendInitial,
+    onNavigate() {
+      const route = currentRoute();
+      if (route !== lastRoute) trackPageView(route);
+    },
+    onError() {
+      send(collectUrl, jsError(currentRoute()));
+    },
   });
-  window.addEventListener('unhandledrejection', () => {
-    send(collectUrl, { type: 'js_error', route: currentRoute() });
+
+  return Object.freeze({
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      stopObserving();
+    },
   });
 }
