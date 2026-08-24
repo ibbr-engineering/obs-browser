@@ -1,0 +1,33 @@
+{
+  "name": "@ibbr-engineering/observability-browser",
+  "version": "1.0.0",
+  "description": "Privacy-safe browser RUM client for IBBR observability.",
+  "type": "module",
+  "sideEffects": false,
+  "license": "Apache-2.0",
+  "main": "dist/obs-browser.iife.js",
+  "module": "dist/obs-browser.esm.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "dist",
+    "src/index.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=esm --target=es2020 --outfile=dist/obs-browser.esm.js",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit --allowJs --checkJs --lib ES2020,DOM src/*.js",
+    "test:browser": "playwright test test/browser.spec.js --project=chromium"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "esbuild": "0.25.9",
+    "happy-dom": "20.11.6",
+    "typescript": "5.9.2",
+    "vitest": "3.2.7"
+  }
+}
