@@ -7,7 +7,7 @@ const SEGMENT_RULES = [
 ];
 
 export function heuristic(path) {
-  const pathname = path.split('?')[0];
+  const pathname = path.split(/[?#]/, 1)[0];
   return (
     pathname
       .split('/')
