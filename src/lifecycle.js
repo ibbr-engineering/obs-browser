@@ -65,9 +65,7 @@ export function observe(subscriber) {
   let active = true;
 
   if (globalThis.document.readyState === 'complete') {
-    queueMicrotask(() => {
-      if (active) subscriber.onLoad?.();
-    });
+    subscriber.onLoad?.();
   }
 
   return function dispose() {
