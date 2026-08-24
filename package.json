@@ -8,6 +8,13 @@
   "main": "dist/obs-browser.iife.js",
   "module": "dist/obs-browser.esm.js",
   "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/obs-browser.esm.js",
+      "default": "./dist/obs-browser.iife.js"
+    }
+  },
   "files": [
     "dist",
     "src/index.d.ts",
@@ -15,9 +22,10 @@
     "README.md"
   ],
   "scripts": {
-    "build": "esbuild src/index.js --bundle --format=esm --target=es2020 --outfile=dist/obs-browser.esm.js",
+    "build": "node esbuild.mjs",
+    "pretest": "npm run build",
     "test": "vitest",
-    "typecheck": "tsc --noEmit --allowJs --checkJs --lib ES2020,DOM src/*.js",
+    "typecheck": "tsc --noEmit --strict --lib ES2020,DOM src/index.d.ts",
     "test:browser": "playwright test test/browser.spec.js --project=chromium"
   },
   "engines": {
