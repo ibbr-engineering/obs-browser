@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify tag version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node -e 'const p = require("./package.json"); if (process.env.RELEASE_TAG !== "v" + p.version) process.exit(1)'
+      - run: npm audit --audit-level=high
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run check:repository
+      - run: npm test -- --run
+      - run: npm run test:browser
+      - run: npm run build
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum \
+            obs-browser.esm.js obs-browser.esm.js.map \
+            obs-browser.esm.min.js obs-browser.esm.min.js.map \
+            obs-browser.iife.js obs-browser.iife.js.map \
+            obs-browser.iife.min.js obs-browser.iife.min.js.map \
+            > SHA256SUMS
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/obs-browser.esm.js dist/obs-browser.esm.js.map \
+            dist/obs-browser.esm.min.js dist/obs-browser.esm.min.js.map \
+            dist/obs-browser.iife.js dist/obs-browser.iife.js.map \
+            dist/obs-browser.iife.min.js dist/obs-browser.iife.min.js.map \
+            dist/SHA256SUMS \
+            --draft --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
