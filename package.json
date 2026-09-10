@@ -1,6 +1,6 @@
 {
   "name": "@ibbr-engineering/observability-browser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Privacy-safe browser RUM client for IBBR observability.",
   "type": "module",
   "sideEffects": false,
@@ -17,7 +17,7 @@
   },
   "files": [
     "dist",
-    "src/index.d.ts",
+    "src",
     "LICENSE",
     "README.md"
   ],
