@@ -10,6 +10,22 @@ describe('closed RUM events', () => {
     expect(Object.isFrozen(event)).toBe(true);
   });
 
+  it('includes service and env in page-view when provided in context', () => {
+    const event = pageView('/orders/:n', {
+      service: 'finfast-fe',
+      env: 'uat',
+      userId: 'secret',
+    });
+
+    expect(event).toEqual({
+      type: 'page_view',
+      route: '/orders/:n',
+      service: 'finfast-fe',
+      env: 'uat',
+    });
+    expect(Object.isFrozen(event)).toBe(true);
+  });
+
   it('creates page-load events and caps excessively long durations', () => {
     expect(pageLoad('/checkout', 700_000)).toEqual({
       type: 'page_load',

@@ -1,4 +1,4 @@
-/*! @ibbr-engineering/observability-browser v1.0.1 | SPDX-License-Identifier: Apache-2.0 */
+/*! @ibbr-engineering/observability-browser v1.1.0 | SPDX-License-Identifier: Apache-2.0 */
 
 // src/config.js
 function isLoopback(hostname) {
@@ -17,9 +17,26 @@ function validateConfig(config) {
   if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.protocol === "http:" && !isLoopback(url.hostname)) {
     throw new TypeError("collectorUrl must be a safe HTTPS URL");
   }
+  let service;
+  if (config.service !== void 0 && config.service !== null) {
+    if (typeof config.service !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(config.service)) {
+      throw new TypeError("service must be an alphanumeric string");
+    }
+    service = config.service;
+  }
+  let env;
+  if (config.env !== void 0 && config.env !== null) {
+    if (typeof config.env !== "string" || !/^[a-zA-Z0-9_-]{1,32}$/.test(config.env)) {
+      throw new TypeError("env must be a valid environment identifier");
+    }
+    env = config.env;
+  }
   const path = url.pathname.replace(/\/+$/, "").replace(/\/collect$/, "");
   url.pathname = `${path}/collect`;
-  return { collectUrl: url.href };
+  const result = { collectUrl: url.href };
+  if (service) result.service = service;
+  if (env) result.env = env;
+  return result;
 }
 
 // src/events.js
@@ -29,21 +46,31 @@ function validateRoute(route) {
   }
   return route;
 }
-function pageView(route) {
-  return Object.freeze({ type: "page_view", route: validateRoute(route) });
+function applyContext(payload, context) {
+  if (context && typeof context === "object") {
+    if (typeof context.service === "string") payload.service = context.service;
+    if (typeof context.env === "string") payload.env = context.env;
+  }
+  return Object.freeze(payload);
 }
-function pageLoad(route, durationMs) {
+function pageView(route, context) {
+  const payload = { type: "page_view", route: validateRoute(route) };
+  return applyContext(payload, context);
+}
+function pageLoad(route, durationMs, context) {
   if (typeof durationMs !== "number" || !Number.isFinite(durationMs) || durationMs < 0) {
     throw new TypeError("durationMs must be a finite non-negative number");
   }
-  return Object.freeze({
+  const payload = {
     type: "page_load",
     route: validateRoute(route),
     durationMs: Math.min(durationMs, 6e5)
-  });
+  };
+  return applyContext(payload, context);
 }
-function jsError(route) {
-  return Object.freeze({ type: "js_error", route: validateRoute(route) });
+function jsError(route, context) {
+  const payload = { type: "js_error", route: validateRoute(route) };
+  return applyContext(payload, context);
 }
 
 // src/heuristic.js
@@ -172,7 +199,8 @@ function send(collectUrl, event) {
 
 // src/index.js
 function initRum(config) {
-  const { collectUrl } = validateConfig(config);
+  const { collectUrl, service, env } = validateConfig(config);
+  const context = service || env ? { service, env } : void 0;
   let lastRoute = heuristic(window.location.pathname);
   let initialSent = false;
   let pageViewSent = false;
@@ -181,14 +209,14 @@ function initRum(config) {
   const trackPageView = (route) => {
     lastRoute = route;
     pageViewSent = true;
-    send(collectUrl, pageView(route));
+    send(collectUrl, pageView(route, context));
   };
   const sendInitial = () => {
     if (initialSent || disposed) return;
     initialSent = true;
     const route = currentRoute();
     if (!pageViewSent) trackPageView(route);
-    send(collectUrl, pageLoad(route, performance.now()));
+    send(collectUrl, pageLoad(route, performance.now(), context));
   };
   const stopObserving = observe({
     onLoad: sendInitial,
@@ -197,7 +225,7 @@ function initRum(config) {
       if (route !== lastRoute) trackPageView(route);
     },
     onError() {
-      send(collectUrl, jsError(currentRoute()));
+      send(collectUrl, jsError(currentRoute(), context));
     }
   });
   return Object.freeze({

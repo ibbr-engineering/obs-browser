@@ -34,4 +34,27 @@ describe('validateConfig', () => {
   ])('rejects unsafe configuration %#', (config) => {
     expect(() => validateConfig(config)).toThrow(TypeError);
   });
+
+  it('accepts valid service and env options', () => {
+    expect(
+      validateConfig({
+        collectorUrl: 'https://rum.example.com',
+        service: 'finfast-fe',
+        env: 'uat',
+      }),
+    ).toEqual({
+      collectUrl: 'https://rum.example.com/collect',
+      service: 'finfast-fe',
+      env: 'uat',
+    });
+  });
+
+  it.each([
+    { collectorUrl: 'https://rum.example.com', service: 'invalid service with spaces!' },
+    { collectorUrl: 'https://rum.example.com', service: 123 },
+    { collectorUrl: 'https://rum.example.com', env: 'invalid/env$' },
+    { collectorUrl: 'https://rum.example.com', env: true },
+  ])('rejects invalid service or env %#', (config) => {
+    expect(() => validateConfig(config)).toThrow(TypeError);
+  });
 });

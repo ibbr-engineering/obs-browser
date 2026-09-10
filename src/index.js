@@ -5,7 +5,8 @@ import { observe } from './lifecycle.js';
 import { send } from './transport.js';
 
 export function initRum(config) {
-  const { collectUrl } = validateConfig(config);
+  const { collectUrl, service, env } = validateConfig(config);
+  const context = service || env ? { service, env } : undefined;
   let lastRoute = heuristic(window.location.pathname);
   let initialSent = false;
   let pageViewSent = false;
@@ -16,7 +17,7 @@ export function initRum(config) {
   const trackPageView = (route) => {
     lastRoute = route;
     pageViewSent = true;
-    send(collectUrl, pageView(route));
+    send(collectUrl, pageView(route, context));
   };
 
   const sendInitial = () => {
@@ -24,7 +25,7 @@ export function initRum(config) {
     initialSent = true;
     const route = currentRoute();
     if (!pageViewSent) trackPageView(route);
-    send(collectUrl, pageLoad(route, performance.now()));
+    send(collectUrl, pageLoad(route, performance.now(), context));
   };
 
   const stopObserving = observe({
@@ -34,7 +35,7 @@ export function initRum(config) {
       if (route !== lastRoute) trackPageView(route);
     },
     onError() {
-      send(collectUrl, jsError(currentRoute()));
+      send(collectUrl, jsError(currentRoute(), context));
     },
   });
 

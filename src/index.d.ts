@@ -1,5 +1,7 @@
 export interface RumConfig {
   collectorUrl: string;
+  service?: string;
+  env?: string;
 }
 
 export interface RumHandle {

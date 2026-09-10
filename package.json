@@ -1,6 +1,6 @@
 {
   "name": "@ibbr-engineering/observability-browser",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Privacy-safe browser RUM client for IBBR observability.",
   "type": "module",
   "sideEffects": false,

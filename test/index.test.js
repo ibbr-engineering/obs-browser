@@ -76,6 +76,32 @@ describe('initRum', () => {
     ]);
   });
 
+  it('attaches service and env to events when configured', async () => {
+    const rum = initRum({
+      collectorUrl: 'https://rum.example.com',
+      service: 'finfast-fe',
+      env: 'uat',
+    });
+    handles.push(rum);
+    await Promise.resolve();
+    window.dispatchEvent(new Event('load'));
+
+    const events = await eventsFor();
+    expect(events).toHaveLength(2);
+    expect(events[0]).toEqual({
+      type: 'page_view',
+      route: '/start',
+      service: 'finfast-fe',
+      env: 'uat',
+    });
+    expect(events[1]).toMatchObject({
+      type: 'page_load',
+      route: '/start',
+      service: 'finfast-fe',
+      env: 'uat',
+    });
+  });
+
   it('shares global hooks and stops each disposed subscriber', async () => {
     const originalPushState = history.pushState;
     const first = initRum({ collectorUrl: 'https://one.example.com' });

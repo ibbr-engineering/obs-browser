@@ -25,7 +25,26 @@ export function validateConfig(config) {
     throw new TypeError('collectorUrl must be a safe HTTPS URL');
   }
 
+  let service;
+  if (config.service !== undefined && config.service !== null) {
+    if (typeof config.service !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(config.service)) {
+      throw new TypeError('service must be an alphanumeric string');
+    }
+    service = config.service;
+  }
+
+  let env;
+  if (config.env !== undefined && config.env !== null) {
+    if (typeof config.env !== 'string' || !/^[a-zA-Z0-9_-]{1,32}$/.test(config.env)) {
+      throw new TypeError('env must be a valid environment identifier');
+    }
+    env = config.env;
+  }
+
   const path = url.pathname.replace(/\/+$/, '').replace(/\/collect$/, '');
   url.pathname = `${path}/collect`;
-  return { collectUrl: url.href };
+  const result = { collectUrl: url.href };
+  if (service) result.service = service;
+  if (env) result.env = env;
+  return result;
 }
